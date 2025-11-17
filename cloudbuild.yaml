@@ -1,0 +1,7 @@
+steps:
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        gcloud compute ssh hemanth-vm --zone=us-central1-a --zone=<ZONE> --command="sudo apt-get update && sudo apt-get install -y nginx"
