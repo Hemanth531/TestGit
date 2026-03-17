@@ -1,11 +1,38 @@
 steps:
-  - name: 'gcr.io/cloud-builders/gcloud'
-    entrypoint: 'bash'
+  # Step 1: Build container image
+  - name: 'gcr.io/cloud-builders/docker'
     args:
-      - '-c'
-      - |
-        gcloud compute ssh hemanth-vm1 --zone=us-central1-a --command="sudo apt-get update && sudo apt-get install -y openjdk-17-jdk"
+      [
+        'build',
+        '-t',
+        'us-central1-docker.pkg.dev/$PROJECT_ID/my-repo/my-service:$SHORT_SHA',
+        '.'
+      ]
 
-options:
-  logging: CLOUD_LOGGING_ONLY
+  # Step 2: Push image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'push',
+        'us-central1-docker.pkg.dev/$PROJECT_ID/my-repo/my-service:$SHORT_SHA'
+      ]
 
+  # Step 3: Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      [
+        'run',
+        'deploy',
+        'my-service',
+        '--image',
+        'us-central1-docker.pkg.dev/$PROJECT_ID/my-repo/my-service:$SHORT_SHA',
+        '--region',
+        'us-central1',
+        '--platform',
+        'managed',
+        '--allow-unauthenticated'
+      ]
+
+images:
+  - 'us-central1-docker.pkg.dev/$PROJECT_ID/my-repo/my-service:$SHORT_SHA'
